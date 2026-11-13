@@ -1,4 +1,3 @@
-import json,hashlib
 from sqlalchemy import select
 from fastapi import HTTPException
 from redis import Redis
@@ -6,6 +5,7 @@ from src.config.settings import REDIS_URL
 from src.models import BenchmarkSet,EfficiencyRun
 from src.services.observation_service import list_observations
 from src.services.sensitivity import analyze_frontier
+from src.services.fingerprint import build_snapshot,fingerprint_snapshot
 from src.constants.enums import RunStatus
 redis=Redis.from_url(REDIS_URL)
 def list_runs(db):return db.scalars(select(EfficiencyRun).order_by(EfficiencyRun.id.desc())).all()
@@ -23,9 +23,10 @@ def execute_run(db,id):
     run.status=RunStatus.RUNNING;db.commit()
     try:
         benchmark=db.get(BenchmarkSet,run.benchmark_id);records=list_observations(db,benchmark.id)
-        result=analyze_frontier(records,run.inputs,run.outputs,run.sensitivity_count)
-        snapshot={'algorithm':'ccr-input-two-stage-v1','benchmark':{'id':benchmark.id,'code':benchmark.code,'period':benchmark.period},'records':records,'inputs':run.inputs,'outputs':run.outputs,'sensitivity_count':run.sensitivity_count,'baseline_self':True,'removal_policy':'same_R_minus_b_for_all_original_targets'}
-        result['fingerprint']=hashlib.sha256(json.dumps(snapshot,sort_keys=True,separators=(',',':'),allow_nan=False).encode()).hexdigest();result['period']=benchmark.period;result['benchmark_name']=benchmark.name
+        fixed_inputs=getattr(run,'fixed_inputs',None) or []
+        result=analyze_frontier(records,run.inputs,run.outputs,run.sensitivity_count,fixed_inputs=fixed_inputs)
+        snapshot=build_snapshot(records,run.inputs,run.outputs,run.sensitivity_count,{'id':benchmark.id,'code':benchmark.code,'period':benchmark.period},fixed_inputs=fixed_inputs)
+        result['fingerprint']=fingerprint_snapshot(snapshot);result['period']=benchmark.period;result['benchmark_name']=benchmark.name
         run.result=result;run.status=RunStatus.COMPLETED;run.error='';db.commit()
     except Exception as exc:
         db.rollback();run=db.get(EfficiencyRun,id);run.status=RunStatus.FAILED;run.error=str(exc)[:600];db.commit()

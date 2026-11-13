@@ -9,6 +9,7 @@ class EfficiencyRun(Base):
     benchmark_id:Mapped[int]=mapped_column(ForeignKey('benchmark_sets.id'))
     inputs:Mapped[list]=mapped_column(JSON)
     outputs:Mapped[list]=mapped_column(JSON)
+    fixed_inputs:Mapped[list]=mapped_column(JSON,default=list)
     sensitivity_count:Mapped[int]=mapped_column(default=3)
     status:Mapped[str]=mapped_column(String(20),default='queued')
     result:Mapped[dict]=mapped_column(JSON,default=dict)

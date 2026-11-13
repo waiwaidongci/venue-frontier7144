@@ -3,3 +3,5 @@
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
 .cases-layout.readonly{grid-template-columns:1fr}
+/* 固定 / 可调整投入分类控件与结果行 */
+.input-choice{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:8px 0}.input-choice.is-off{opacity:.55}.role-toggle{flex-shrink:0;font-size:9px;padding:5px 9px;border:1px solid var(--line);background:oklch(96% .006 101);color:var(--green)}.role-toggle.is-fixed{border-color:var(--brass);color:var(--brass);background:oklch(90% .035 88)}.role-toggle:disabled{opacity:.45;cursor:not-allowed}.form-error{font-size:10px;color:var(--rust);line-height:1.9;margin:4px 0 12px}.fixed-input-row td{background:oklch(91% .018 105)}.fixed-input-row td small{color:var(--brass)}
